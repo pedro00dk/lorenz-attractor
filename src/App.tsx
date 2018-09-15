@@ -5,17 +5,39 @@ export class App extends React.Component<{}, { point: Three.Vector3, sigma: numb
 
     state = {
         point: new Three.Vector3(),
-        sigma: 0,
-        rho: 0,
-        beta: 0
+        sigma: 1,
+        rho: 1,
+        beta: 1
     }
 
     render() {
+        let { sigma, rho, beta } = this.state
+
         return <div className='d-flex flex-row' style={{ width: '100vw', height: '100vh' }}>
             <div className='d-flex flex-column px-5 py-3 w-100'>
                 <div className='d-flex flex-row'>
                     <div className='d-flex flex-column w-100'>
                         <h1>Lorenz Attractor</h1>
+                    </div>
+                </div>
+                <div className='d-flex flex-row'>
+                    <div className='d-flex flex-column p-2'>
+                        <label>Sigma (σ)</label>
+                        <input type='number' defaultValue={sigma.toString()}
+                            onBlur={e => this.setState({ sigma: e.target.valueAsNumber })}
+                        />
+                    </div>
+                    <div className='d-flex flex-column p-2'>
+                        <label>Rho (ρ)</label>
+                        <input type='number' defaultValue={rho.toString()}
+                            onBlur={e => this.setState({ rho: e.target.valueAsNumber })}
+                        />
+                    </div>
+                    <div className='d-flex flex-column p-2'>
+                        <label>Beta (β)</label>
+                        <input type='number' defaultValue={beta.toString()}
+                            onBlur={e => this.setState({ beta: e.target.valueAsNumber })}
+                        />
                     </div>
                 </div>
                 <div className='d-flex flex-row' style={{ flex: 1 }}>
@@ -25,6 +47,14 @@ export class App extends React.Component<{}, { point: Three.Vector3, sigma: numb
                 </div>
             </div>
         </div>
+    }
+
+    componentDidMount() {
+        this.componentDidUpdate()
+    }
+
+    componentDidUpdate() {
+        console.log(this.state)
     }
 }
 
@@ -63,10 +93,10 @@ class View extends React.Component<{}, {}> {
     }
 
     start() {
-        console.log('start')
+        //console.log('start')
     }
 
     update() {
-        console.log('update')
+        //console.log('update')
     }
 }
