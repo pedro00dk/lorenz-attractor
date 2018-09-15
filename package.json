@@ -8,11 +8,13 @@
     "devDependencies": {
         "@types/react": "^16.4.14",
         "@types/react-dom": "^16.0.7",
+        "@types/three": "^0.92.21",
         "parcel": "^1.9.7",
         "typescript": "^3.0.3"
     },
     "dependencies": {
         "react": "^16.5.1",
-        "react-dom": "^16.5.1"
+        "react-dom": "^16.5.1",
+        "three": "^0.96.0"
     }
 }
