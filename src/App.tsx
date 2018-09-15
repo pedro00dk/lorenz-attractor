@@ -1,13 +1,14 @@
 import * as React from 'react'
 import * as Three from 'three'
 
-export class App extends React.Component<{}, { point: Three.Vector3, sigma: number, rho: number, beta: number }> {
+import { attractorGenerator } from './lorenz'
+
+export class App extends React.Component<{}, { sigma: number, rho: number, beta: number }> {
 
     state = {
-        point: new Three.Vector3(),
-        sigma: 1,
-        rho: 1,
-        beta: 1
+        sigma: 10,
+        rho: 28,
+        beta: 8 / 3
     }
 
     render() {
@@ -42,7 +43,7 @@ export class App extends React.Component<{}, { point: Three.Vector3, sigma: numb
                 </div>
                 <div className='d-flex flex-row' style={{ flex: 1 }}>
                     <div className='d-flex flex-column w-100'>
-                        <View />
+                        <View {...this.state} />
                     </div>
                 </div>
             </div>
@@ -58,7 +59,7 @@ export class App extends React.Component<{}, { point: Three.Vector3, sigma: numb
     }
 }
 
-class View extends React.Component<{}, {}> {
+class View extends React.Component<{ sigma: number, rho: number, beta: number }, {}> {
 
     canvas: HTMLCanvasElement
 
@@ -66,6 +67,8 @@ class View extends React.Component<{}, {}> {
     scene: Three.Scene
     camera: Three.Camera
 
+    attractor: any
+    points: Three.Vector3[]
 
     render() {
         return <canvas style={{ width: '100%', height: '100%' }}
@@ -92,11 +95,20 @@ class View extends React.Component<{}, {}> {
         updateLoop()
     }
 
+    componentDidUpdate() {
+        this.start()
+    }
+
     start() {
-        //console.log('start')
+        let { sigma, rho, beta } = this.props
+
+        this.attractor = attractorGenerator(new Three.Vector3(0.01, 0, 0), sigma, rho, beta, 0.01)
+        this.points = []
     }
 
     update() {
-        //console.log('update')
+        let { attractor, points } = this
+
+        points.push(attractor.next().value as Three.Vector3)
     }
 }
