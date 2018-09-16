@@ -71,6 +71,10 @@ class View extends React.Component<{ sigma: number, rho: number, beta: number },
     }
 
     componentDidMount() {
+        this.componentDidUpdate()
+    }
+
+    componentDidUpdate() {
         const { sigma, rho, beta } = this.props
         this.manager = new Manager({ canvas: this.canvas })
 
@@ -84,6 +88,7 @@ class Camera extends Actor {
 
     start() {
         this.camera.position.set(0, 3, 50)
+        center.set(0, 0, 0)
 
         document.onmousewheel = e => {
             let wheelDelta = e.wheelDeltaY
@@ -130,11 +135,11 @@ class LorenzAttractor extends Actor {
     }
 
     start() {
-        this.attractor = this.attractorGenerator(new Three.Vector3(0.01, 0, 0), this.sigma, this.rho, this.beta, 0.005)
+        this.attractor = this.attractorGenerator(new Three.Vector3(0.01, 0, 0), this.sigma, this.rho, this.beta, 0.0075)
         this.index = 0
 
         let geometry = new Three.BufferGeometry()
-        geometry.addAttribute('position', new Three.BufferAttribute(new Float32Array(150000), 3))
+        geometry.addAttribute('position', new Three.BufferAttribute(new Float32Array(300000), 3))
         geometry.setDrawRange(0, this.index)
         this.line = new Three.Line(geometry, new Three.LineBasicMaterial({ color: 0x000000 }))
 
