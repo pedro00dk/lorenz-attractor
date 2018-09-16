@@ -1,7 +1,7 @@
 import * as React from 'react'
 import * as Three from 'three'
-
-import { attractorGenerator } from './lorenz'
+import { Actor, Manager } from 'three-actors'
+import { BufferAttribute, BufferGeometry } from 'three';
 
 export class App extends React.Component<{}, { sigma: number, rho: number, beta: number }> {
 
@@ -12,7 +12,7 @@ export class App extends React.Component<{}, { sigma: number, rho: number, beta:
     }
 
     render() {
-        let { sigma, rho, beta } = this.state
+        const { sigma, rho, beta } = this.state
 
         return <div className='d-flex flex-row' style={{ width: '100vw', height: '100vh' }}>
             <div className='d-flex flex-column px-5 py-3 w-100'>
@@ -62,13 +62,7 @@ export class App extends React.Component<{}, { sigma: number, rho: number, beta:
 class View extends React.Component<{ sigma: number, rho: number, beta: number }, {}> {
 
     canvas: HTMLCanvasElement
-
-    renderer: Three.Renderer
-    scene: Three.Scene
-    camera: Three.Camera
-
-    attractor: any
-    points: Three.Vector3[]
+    manager: Manager
 
     render() {
         return <canvas style={{ width: '100%', height: '100%' }}
@@ -77,38 +71,90 @@ class View extends React.Component<{ sigma: number, rho: number, beta: number },
     }
 
     componentDidMount() {
-        this.renderer = new Three.WebGLRenderer({ canvas: this.canvas })
-        this.scene = new Three.Scene()
-        this.camera = new Three.PerspectiveCamera(75, 1, 0.1, 1000)
+        const { sigma, rho, beta } = this.props
+        this.manager = new Manager({ canvas: this.canvas })
 
-        // resize event
+        this.manager.start([new Camera(), new LorenzAttractor(sigma, rho, beta)])
+    }
+}
 
-        // animation loop
-        let updateLoop = () => {
-            requestAnimationFrame(updateLoop)
-            this.update()
-            this.renderer.render(this.scene, this.camera)
+const center = new Three.Vector3(0, 0, 0)
+
+class Camera extends Actor {
+
+    start() {
+        this.camera.position.set(0, 3, 50)
+
+        document.onmousewheel = e => {
+            let wheelDelta = e.wheelDeltaY
+            let p = this.camera.position
+            this.camera.position.set(
+                p.x * Math.cos(wheelDelta) - p.z * Math.sin(wheelDelta),
+                p.y,
+                p.z * Math.cos(wheelDelta) + p.x * Math.sin(wheelDelta)
+            )
+            this.camera.lookAt(center)
         }
-
-        // initialization
-        this.start()
-        updateLoop()
     }
 
-    componentDidUpdate() {
-        this.start()
+    update(delta) {
+        delta = delta * 0.2
+        let p = this.camera.position
+        this.camera.position.set(
+            p.x * Math.cos(delta) - p.z * Math.sin(delta),
+            p.y,
+            p.z * Math.cos(delta) + p.x * Math.sin(delta)
+        )
+        this.camera.lookAt(center)
+    }
+}
+
+class LorenzAttractor extends Actor {
+    attractor: any
+    line: Three.Line
+    index = 0
+
+    constructor(private sigma: number, private rho: number, private beta: number) {
+        super()
+    }
+
+    *attractorGenerator(point: Three.Vector3, sigma: number, rho: number, beta: number, delta: number): IterableIterator<Three.Vector3> {
+        yield point
+        while (true) {
+            yield point.add(
+                new Three.Vector3(
+                    sigma * (point.y - point.x), point.x * (rho - point.z) - point.y, point.x * point.y - beta * point.z
+                ).multiplyScalar(delta)
+            )
+        }
     }
 
     start() {
-        let { sigma, rho, beta } = this.props
+        this.attractor = this.attractorGenerator(new Three.Vector3(0.01, 0, 0), this.sigma, this.rho, this.beta, 0.005)
+        this.index = 0
 
-        this.attractor = attractorGenerator(new Three.Vector3(0.01, 0, 0), sigma, rho, beta, 0.01)
-        this.points = []
+        let geometry = new Three.BufferGeometry()
+        geometry.addAttribute('position', new Three.BufferAttribute(new Float32Array(150000), 3))
+        geometry.setDrawRange(0, this.index)
+        this.line = new Three.Line(geometry, new Three.LineBasicMaterial({ color: 0x000000 }))
+
+        this.scene.add(this.line)
     }
 
     update() {
-        let { attractor, points } = this
+        let point = this.attractor.next().value as Three.Vector3
+        let geometry = this.line.geometry as BufferGeometry
+        let positionsAttribute = geometry.attributes['position'] as BufferAttribute
+        let positionsArray = positionsAttribute.array as Float32Array
 
-        points.push(attractor.next().value as Three.Vector3)
+        positionsArray[this.index * 3] = point.x
+        positionsArray[this.index * 3 + 1] = point.y
+        positionsArray[this.index * 3 + 2] = point.z
+
+        this.index++
+        geometry.setDrawRange(0, this.index)
+        positionsAttribute.needsUpdate = true
+
+        center.multiplyScalar((this.index - 1) / this.index).add(point.clone().multiplyScalar(1 / this.index))
     }
 }
